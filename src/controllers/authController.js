@@ -86,6 +86,7 @@ const signup = async (req, res) => {
         name: createdUser.name,
         email: createdUser.email,
         phone: createdUser.phone,
+        otpVerified: createdUser.otp_verified,
       },
     });
   } catch (error) {
@@ -140,18 +141,36 @@ const login = async (req, res) => {
     });
   }
 
+  if (!user.otp_verified) {
+    console.log(`[AUTH] Credentials ok, OTP not verified: ${safeEmail}`);
+    return res.status(200).json({
+      success: true,
+      requireOtpVerification: true,
+      message: "Please verify your phone number to continue.",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        otpVerified: false,
+      },
+    });
+  }
+
   const token = createAuthToken(user);
 
   console.log(`[AUTH] Login successful: ${safeEmail}`);
 
   return res.status(200).json({
     success: true,
+    requireOtpVerification: false,
     message: "Login successful.",
     token,
     user: {
       id: user.id,
       name: user.name,
       email: user.email,
+      otpVerified: true,
     },
   });
 };

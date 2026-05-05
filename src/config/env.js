@@ -5,6 +5,7 @@ dotenv.config();
 const env = {
   port: process.env.PORT || 4000,
   jwtSecret: process.env.JWT_SECRET || "change-this-in-production",
+  googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
   dbUser: process.env.DB_USER || "postgres",
   dbPassword: process.env.DB_PASSWORD || "",
   dbName: process.env.DB_NAME || "share_ride",
@@ -12,6 +13,9 @@ const env = {
   dbPort: Number(process.env.DB_PORT || 5432),
   dbSsl: process.env.DB_SSL === "true",
   cloudSqlConnectionName: process.env.CLOUD_SQL_CONNECTION_NAME || "",
+  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || "",
+  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || "",
+  twilioVerifyServiceSid: process.env.TWILIO_VERIFY_SERVICE_SID || "",
 };
 
 module.exports = env;

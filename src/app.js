@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 
 const authRouter = require("./routes/authRoutes");
+const placeRouter = require("./routes/placeRoutes");
+const otpRouter = require("./routes/otpRoutes");
 const pool = require("./config/db");
 
 const app = express();
@@ -49,5 +51,7 @@ app.get("/api/health/db", async (req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/places", placeRouter);
+app.use("/api/otp", otpRouter);
 
 module.exports = app;
