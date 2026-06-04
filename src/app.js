@@ -57,3 +57,12 @@ app.use("/api/otp", otpRouter);
 app.use("/api/maps", mapRouter);
 
 module.exports = app;
+
+// When started directly (e.g. Render: `node src/app.js`), bind and listen.
+// When imported (e.g. tests), only export the app.
+if (require.main === module) {
+  const env = require("./config/env");
+  app.listen(env.port, "0.0.0.0", () => {
+    console.log(`Server running on port ${env.port}`);
+  });
+}
