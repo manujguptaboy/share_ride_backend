@@ -1,10 +1,26 @@
 const pool = require("../config/db");
 
+const userSelectFields = `
+  u.id,
+  u.name,
+  u.email,
+  u.phone,
+  u.password_hash,
+  u.is_terms_accepted,
+  COALESCE(o.phone_otp_verified, false) AS phone_otp_verified,
+  COALESCE(o.aadhaar_verified, false) AS aadhaar_verified
+`;
+
+const userFromClause = `
+  FROM users u
+  LEFT JOIN user_otp o ON o.user_id = u.id
+`;
+
 const findUserByEmail = async (email) => {
   const query = `
-    SELECT id, name, email, phone, password_hash, is_terms_accepted, otp_verified
-    FROM users
-    WHERE LOWER(email) = LOWER($1)
+    SELECT ${userSelectFields}
+    ${userFromClause}
+    WHERE LOWER(u.email) = LOWER($1)
     LIMIT 1
   `;
 
@@ -14,9 +30,9 @@ const findUserByEmail = async (email) => {
 
 const findUserByPhone = async (phone) => {
   const query = `
-    SELECT id, name, email, phone, password_hash, is_terms_accepted, otp_verified
-    FROM users
-    WHERE phone = $1
+    SELECT ${userSelectFields}
+    ${userFromClause}
+    WHERE u.phone = $1
     LIMIT 1
   `;
 
@@ -24,40 +40,60 @@ const findUserByPhone = async (phone) => {
   return rows[0] || null;
 };
 
-const createUser = async ({ name, email, phone, passwordHash, isTermsAccepted }) => {
+const findUserById = async (userId) => {
   const query = `
-    INSERT INTO users (name, email, phone, password_hash, is_terms_accepted)
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING id, name, email, phone, is_terms_accepted, otp_verified
+    SELECT ${userSelectFields}
+    ${userFromClause}
+    WHERE u.id = $1
+    LIMIT 1
   `;
 
-  const values = [name, email, phone, passwordHash, isTermsAccepted];
-  const { rows } = await pool.query(query, values);
-  return rows[0];
+  const { rows } = await pool.query(query, [userId]);
+  return rows[0] || null;
 };
 
-const updateOtpVerifiedByPhone = async (phone) => {
-  const raw = String(phone ?? "").trim();
-  if (!raw) return { rowCount: 0 };
+const createUser = async ({ name, email, phone, passwordHash, isTermsAccepted }) => {
+  const client = await pool.connect();
 
-  const digits = raw.replace(/\D/g, "");
-  const last10 = digits.length >= 10 ? digits.slice(-10) : "";
-  if (last10.length !== 10) return { rowCount: 0 };
+  try {
+    await client.query("BEGIN");
 
-  const query = `
-    UPDATE users
-    SET otp_verified = true,
-        updated_at = NOW()
-    WHERE RIGHT(REGEXP_REPLACE(phone, '\\D', '', 'g'), 10) = $1
-  `;
+    const userQuery = `
+      INSERT INTO users (name, email, phone, password_hash, is_terms_accepted)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id, name, email, phone, is_terms_accepted
+    `;
 
-  const { rowCount } = await pool.query(query, [last10]);
-  return { rowCount };
+    const values = [name, email, phone, passwordHash, isTermsAccepted];
+    const { rows } = await client.query(userQuery, values);
+    const user = rows[0];
+
+    await client.query(
+      `
+        INSERT INTO user_otp (user_id)
+        VALUES ($1)
+      `,
+      [user.id]
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      ...user,
+      phone_otp_verified: false,
+      aadhaar_verified: false,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 module.exports = {
   createUser,
   findUserByEmail,
   findUserByPhone,
-  updateOtpVerifiedByPhone,
+  findUserById,
 };

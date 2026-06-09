@@ -16,6 +16,9 @@ const env = {
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || "",
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || "",
   twilioVerifyServiceSid: process.env.TWILIO_VERIFY_SERVICE_SID || "",
+  sandboxApiKey: process.env.SANDBOX_API_KEY || "",
+  sandboxApiSecret: process.env.SANDBOX_API_SECRET || "",
+  sandboxApiBaseUrl: process.env.SANDBOX_API_BASE_URL || "",
 };
 
 module.exports = env;

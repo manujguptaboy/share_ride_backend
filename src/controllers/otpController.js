@@ -1,6 +1,6 @@
 const twilio = require("twilio");
 const env = require("../config/env");
-const { updateOtpVerifiedByPhone } = require("../repositories/userRepository");
+const { setPhoneOtpVerifiedByPhone } = require("../repositories/userOtpRepository");
 
 const getClient = () => {
   if (!env.twilioAccountSid || !env.twilioAuthToken) {
@@ -99,14 +99,14 @@ const verifyOtp = async (req, res) => {
 
     if (check.status === "approved") {
       try {
-        const { rowCount } = await updateOtpVerifiedByPhone(phone);
+        const { rowCount } = await setPhoneOtpVerifiedByPhone(phone);
         if (rowCount === 0) {
           console.warn(
-            "[OTP] Twilio approved but no users row matched phone for otp_verified update"
+            "[OTP] Twilio approved but no user_otp row matched phone for phone_otp_verified update"
           );
         }
       } catch (dbError) {
-        console.error("[OTP] Failed to set otp_verified:", dbError.message);
+        console.error("[OTP] Failed to set phone_otp_verified:", dbError.message);
       }
 
       return res.status(200).json({

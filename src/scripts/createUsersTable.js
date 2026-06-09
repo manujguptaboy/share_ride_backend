@@ -9,7 +9,6 @@ const createUsersTable = async () => {
       phone VARCHAR(20) UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       is_terms_accepted BOOLEAN NOT NULL DEFAULT true,
-      otp_verified BOOLEAN NOT NULL DEFAULT false,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
@@ -32,15 +31,9 @@ const createUsersTable = async () => {
     ALTER COLUMN phone SET NOT NULL;
   `;
 
-  const alterOtpVerifiedQuery = `
-    ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS otp_verified BOOLEAN NOT NULL DEFAULT false;
-  `;
-
   try {
     await pool.query(createTableQuery);
     await pool.query(alterTableQuery);
-    await pool.query(alterOtpVerifiedQuery);
     await pool.query(fixNullPhoneQuery);
     await pool.query(enforcePhoneNotNullQuery);
     console.log("[DB] users table is ready for signup UI.");

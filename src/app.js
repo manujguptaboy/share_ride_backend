@@ -5,6 +5,7 @@ const authRouter = require("./routes/authRoutes");
 const placeRouter = require("./routes/placeRoutes");
 const otpRouter = require("./routes/otpRoutes");
 const mapRouter = require("./routes/mapRoutes");
+const aadhaarRouter = require("./routes/aadhaarRoutes");
 const pool = require("./config/db");
 
 const app = express();
@@ -55,6 +56,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/places", placeRouter);
 app.use("/api/otp", otpRouter);
 app.use("/api/maps", mapRouter);
+app.use("/api/aadhaar", aadhaarRouter);
 
 module.exports = app;
 

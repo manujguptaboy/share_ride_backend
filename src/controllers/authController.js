@@ -6,6 +6,7 @@ const {
   createUser,
   findUserByEmail,
   findUserByPhone,
+  findUserById,
 } = require("../repositories/userRepository");
 
 const createAuthToken = (user) =>
@@ -86,7 +87,8 @@ const signup = async (req, res) => {
         name: createdUser.name,
         email: createdUser.email,
         phone: createdUser.phone,
-        otpVerified: createdUser.otp_verified,
+        otpVerified: createdUser.phone_otp_verified,
+        aadhaarVerified: createdUser.aadhaar_verified,
       },
     });
   } catch (error) {
@@ -141,8 +143,8 @@ const login = async (req, res) => {
     });
   }
 
-  if (!user.otp_verified) {
-    console.log(`[AUTH] Credentials ok, OTP not verified: ${safeEmail}`);
+  if (!user.phone_otp_verified) {
+    console.log(`[AUTH] Credentials ok, phone OTP not verified: ${safeEmail}`);
     return res.status(200).json({
       success: true,
       requireOtpVerification: true,
@@ -153,6 +155,7 @@ const login = async (req, res) => {
         email: user.email,
         phone: user.phone,
         otpVerified: false,
+        aadhaarVerified: user.aadhaar_verified,
       },
     });
   }
@@ -171,11 +174,48 @@ const login = async (req, res) => {
       name: user.name,
       email: user.email,
       otpVerified: true,
+      aadhaarVerified: user.aadhaar_verified,
     },
   });
+};
+
+const getVerificationStatus = async (req, res) => {
+  const userId = Number(req.params.userId);
+
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Valid user id is required.",
+    });
+  }
+
+  try {
+    const user = await findUserById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      verification: {
+        phoneOtpVerified: user.phone_otp_verified,
+        aadhaarVerified: user.aadhaar_verified,
+      },
+    });
+  } catch (error) {
+    console.error(`[AUTH] Verification status failed for user ${userId}:`, error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch verification status.",
+    });
+  }
 };
 
 module.exports = {
   signup,
   login,
+  getVerificationStatus,
 };
